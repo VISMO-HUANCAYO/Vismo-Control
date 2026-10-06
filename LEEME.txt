@@ -1,0 +1,7 @@
+VISMO: ICONO DE APP
+
+Sube los cinco archivos a la raíz del repositorio Vismo-Control:
+icon-vismo-192.png, icon-vismo-512.png, manifest.webmanifest, index.html, sw.js.
+Esta actualización usa el index de la versión con Quincena. Conserva app.js, style.css, config.js y logos. No requiere SQL.
+
+Después del despliegue, recarga la página. Si la app instalada mantiene el icono antiguo, desinstala SOLO la app de asistencia y vuelve a instalarla desde Chrome. Esto no borra los registros guardados en Supabase. No desinstales Chrome.

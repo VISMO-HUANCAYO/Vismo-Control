@@ -1,0 +1,18 @@
+import React,{useState} from 'react';
+import {createRoot} from 'react-dom/client';
+import Panel from './panel';
+const cfg=()=>window.VISMO_CONFIG||{};
+const key='vismo-auth-session';
+const session=()=>{try{return JSON.parse(localStorage.getItem(key)||'null')}catch{return null}};
+const remember=(s:any)=>localStorage.setItem(key,JSON.stringify({...s,expires_at:s.expires_at||Math.floor(Date.now()/1000)+s.expires_in}));
+async function authCall(path:string,body:any){const c=cfg();const r=await fetch(c.supabaseUrl+'/auth/v1/'+path,{method:'POST',headers:{apikey:c.publishableKey,'Content-Type':'application/json'},body:JSON.stringify(body)});const j=await r.json();if(!r.ok)throw Error(j.msg||j.error_description||j.message||'No se pudo ingresar.');return j;}
+async function token(){let s=session();if(!s)throw Error('Inicia sesión con tu correo y contraseña.');if(s.expires_at<Date.now()/1000+60){s=await authCall('token?grant_type=refresh_token',{refresh_token:s.refresh_token});remember(s);}return s.access_token;}
+export async function apiRequest(url:string,options?:any){if(!navigator.onLine)return new Response(JSON.stringify({error:'Sin internet. La marcación no se guardó; vuelve a intentarlo cuando tengas conexión.'}),{status:503});try{const c=cfg();const payload=options?.body?JSON.parse(options.body):{action:'read'};const r=await fetch(c.supabaseUrl+'/rest/v1/rpc/vismo_control',{method:'POST',headers:{apikey:c.publishableKey,Authorization:'Bearer '+await token(),'Content-Type':'application/json'},body:JSON.stringify({payload})});const j=await r.json();return new Response(JSON.stringify(r.ok?j:{error:j.message||'Error de conexión.'}),{status:r.status});}catch(e:any){return new Response(JSON.stringify({error:e.message}),{status:400});}}
+function App(){const [signed,S]=useState(!!session()),[error,E]=useState(''),[busy,B]=useState(false);const c=cfg();async function login(e:any){e.preventDefault();B(true);E('');try{const f=new FormData(e.target);remember(await authCall('token?grant_type=password',{email:f.get('email'),password:f.get('password')}));S(true);}catch(e:any){E(e.message);}finally{B(false);}}
+async function logout(){try{await fetch(c.supabaseUrl+'/auth/v1/logout',{method:'POST',headers:{apikey:c.publishableKey,Authorization:'Bearer '+await token()}})}catch{}localStorage.removeItem(key);S(false);}
+if(!c.supabaseUrl||!c.publishableKey)return <section className="card login"><div className="brand">VISMO<span>CONTROL DE ASISTENCIA</span></div><h2>Configuración pendiente</h2><p>Esta aplicación es independiente de ChatGPT. Para activarla, completa config.js con la URL y clave publicable de tu proyecto Supabase y ejecuta backend.sql.</p><p>Consulta INSTRUCCIONES.html incluido en el paquete.</p></section>;
+if(!signed)return <section className="card login"><div className="brand">VISMO<span>CONTROL DE ASISTENCIA</span></div><h2>Bienvenido a tu jornada</h2><p>Ingresa con la cuenta que te entregó administración.</p><form onSubmit={login}><label>Correo<input name="email" type="email" autoComplete="username" required/></label><label>Contraseña<input name="password" type="password" autoComplete="current-password" required/></label>{error&&<p role="alert">{error}</p>}<button className="primary" disabled={busy}>{busy?'Ingresando…':'Ingresar'}</button></form><p className="muted">Si olvidaste tu contraseña, solicita a administración que la restablezca.</p></section>;
+return <><button style={{position:'fixed',right:20,bottom:16,zIndex:5,fontSize:11}} onClick={logout}>Cerrar sesión</button><Panel/></>;
+}
+createRoot(document.getElementById('root')!).render(<App/>);
+if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{});

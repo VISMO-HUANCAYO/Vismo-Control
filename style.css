@@ -25,3 +25,5 @@
 .vb-peer.vr-card>img:first-child{background:transparent;padding:0;border-radius:0;width:240px;max-width:80%;height:auto;object-fit:contain}
 
 .vb-peer.vr-card>img:first-child{width:170px;max-width:65%;margin:0 auto 18px}.vb-color-picker{display:block;margin:12px 0}.vb-color-picker select{margin-top:6px}
+
+.vismo-plaque{margin:16px 0;padding-top:12px;border-top:1px solid #ddd6c3}.vismo-plaque label{display:block;margin:12px 0}.vismo-plaque select{display:block;margin-top:6px;width:100%}
